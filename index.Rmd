@@ -19,14 +19,21 @@ tidy=TRUE, tidy.opts=list(width.cutoff=60), R.options=list(max.print=100))
 
 ## Data Wrangling, Exploration, Visualization
 
-### Name and EID here
+### Layla Kutty lak2378
 
 #### Introduction 
 
 Paragraph or two introducing your datasets and variables, why they are interesting to you, etc.
 
+I chose two movie related datasets that I found on Kaggle. data1 is a dataset of Disney movies that I found, and data2 is a list of IMDB's top 1000 movies and shows based on their IMDB ratings. data1 has the title, genre, Motion Picture Association film rating, inflation adjusted gross, and total gross of that respective movie. data2 has the title, certificate, IMDB rating, meta score, director, number of votes, and gross income from that movie. 
+
+I am a huge movie lover so I thought this would be fun to do! Aside from that, I absolutely love Disney, so that is why I picked those specific movies to look at. I plan to figure out which of the Disney movies made it on to IMDB's top 1000 movies/shows list. I'm excited to see what IMDB ratings the Disney movies on that list got.
 ```{R}
-# read your datasets in here, e.g., with read_csv()
+library(tidyverse)
+data1 <- read_csv("disney_movies.csv")
+data2 <- read_csv("imdb_top_1000.csv")
+data1 <- data1 %>% rename("gross(disney.data)" = "total.gross")
+data2 <- data2 %>% rename("gross(IMDB.data)" = "Gross")
 
 ```
 
@@ -36,51 +43,152 @@ If your datasets are tidy already, demonstrate that you can reshape data with pi
 
 ```{R}
 # your tidying code (if applicable; can also wait until wrangling section)
-```
 
+
+```
+I will be waiting until the wrangling section!
     
-#### Joining/Merging
+#### Joining/Merging including a discussion of how many observations/rows and distinct IDs were in each original dataset, which IDs appeared in one dataset but not the other, how many observations in each dataset were dropped (if any) after doing the join, and why you chose this particular join. 
 
 ```{R}
-# your joining code
-
-# your joining code
+#rename column in data2
+data2 <- data2 %>% rename("movie.title" = "Series.Title")
+#joining the data
+joined_data <- inner_join(data1, data2, by="movie.title")
 ```
 
-Discussions of joining here. Feel encouraged to break up into more than once code chunk and discuss each in turn.
-
-####  Wrangling
 
 ```{R}
-# your wrangling code
-
-# your wrangling code
-
-# your wrangling code
+#observations in each dataset and number of movies they share
+nrow(data1)
+nrow(data2)
+nrow(joined_data)
 ```
 
-Your discussion of wrangling section here. Feel encouraged to break up into more than once code chunk and discuss each in turn.
+
+```{R}
+#number of dropped columns
+nrow(data1)-nrow(joined_data)
+nrow(data2)-nrow(joined_data)
+```
+
+
+```{R}
+#unique IDs in each dataset
+data1 %>% summarise_all(n_distinct)
+data2 %>% summarise_all(n_distinct)
+```
+
+
+```{R}
+#appear in data1 but not data2
+nrow(anti_join(data1, data2, by = c("movie.title")))
+data1.not.data2 <- anti_join(data1, data2, by = c("movie.title"))
+data1.not.data2
+```
+
+
+```{R}
+#appear in data2 but not data1
+nrow(anti_join(data2, data1, by = c("movie.title")))
+data2.not.data1 <- anti_join(data2, data1, by = c("movie.title"))
+data2.not.data1
+```
+
+Before joining the two datasets, data1 had 579 observations and data2 had 1000 observations. After joining, the dataset was condensed to 50 observations. This is how many IDs the two datasets have in common, and is significantly smaller than the original two datasets. This is because 529 observations from data1 were dropped and 950 observations from data2 were dropped. This shouldn't give me any problems because the joined dataset now only contains Disney movies that made the IMDB top 1000, no important movies were lost. Additionally, 529 of the IDs in data1 were not in data2 and 952 of the IDs in data2 were not in data1. To see which movies those were, the datasets data1.not.data2 and data2.not.data1 can be viewed. Lastly, there are 573 unique IDs in data1 and 999 unique IDs in data2.
+
+In order to figure out which of the movies from my disney list made it on to the IMDB top 1000 list, I decided to use inner join. This would allow me to join the datasets by movie name, giving me a dataset with only the movies that were on both lists. I had to match the column names of both datasets first in order to join them. That is what my first line of code is.
+
+####  Wrangling Using
+
+```{R}
+library(knitr)
+library(gt)
+
+#average gross profit in descending order
+movies_average_gross <- joined_data %>% select(movie.title, `gross(disney.data)`, `gross(IMDB.data)`) %>% mutate(average_gross = (`gross(disney.data)`+`gross(IMDB.data)`)/2) %>% arrange(desc(average_gross)) 
+#the quartile based on the average gross profit
+ntile_gross <- movies_average_gross %>% mutate(avg_gross4tile = ntile(average_gross,4))
+ntile_gross
+#average gross profit of movies with "The" in the title
+ntile_gross %>% group_by(movie.title) %>% filter(str_detect(movie.title, "The")) %>% summarise(average_gross)
+```
+Because my datasets both reported gross for each of their movies, I thought it would be interesting to find the average of the two. In order to do this, I selected the important variables (title and gross for each dataset) and created a new variable known as average_gross using mutate and arranged it in descending order. Next, I wanted to see what quartile each movie's gross landed in. In order to do this, I used the mutate function along with a dplyr vector function. Lastly I incorporated str_detect by finding the average gross for each movie that had "The" in the title.
+
+
+```{R}
+#summary statistics for numerical variables
+statistics <- joined_data %>%  select(`gross(disney.data)`, inflation.adjusted.gross, IMDB.Rating, Meta.score, No.of.Votes,`gross(IMDB.data)`) %>% na.omit() %>% summarise_each(funs(mean=mean, sd=sd, min = min, max=max, median=median))
+
+stats_tidy1 <- statistics %>% gather(stat, val) %>% separate(stat, into = c("var", "stat"), sep = "_") %>% spread(stat, val) %>% select(var, mean, sd, min, max, median)
+
+stats_tidy1 %>% gt %>% tab_header(title=md("**Summary Statistics**"), subtitle=md("Numeric Variables")) %>% tab_spanner(label="Variables", columns=c("var", "mean", "sd", "min", "max", "median"))
+```
+
+
+```{R}
+#counts for categorical variables
+categorical_counts <- joined_data %>% group_by(mpaa.rating, genre, Director, Certificate) %>% summarise(n()) 
+categorical_counts %>% kable()
+```
+
+
+```{R}
+#number of NAs for each variable
+na_stat <- joined_data %>% summarise_all(funs(sum(is.na(.))))
+na_stat %>% kable()
+```
+
+
+```{R}
+#statistics with grouping by genre and mpaa_rating
+grouping_genre_mpaa <- joined_data %>% group_by(genre, mpaa.rating) %>% summarise_each(funs(mean), `gross(disney.data)`, inflation.adjusted.gross, IMDB.Rating, Meta.score, No.of.Votes,`gross(IMDB.data)`)
+
+grouping_genre_mpaa %>% gt %>% tab_header(title=md("**Summary Statistics**"), subtitle=md("Grouped By Genre and MPAA Rating")) %>% tab_spanner(label="Variables",columns=c("genre","mpaa.rating","gross(disney.data)","inflation.adjusted.gross", "IMDB.Rating", "Meta.score", "No.of.Votes", "gross(IMDB.data)"))
+
+#statistics with grouping by director and certificate
+grouping_direct_cert <- joined_data %>% group_by(Director, Certificate) %>% summarise_each(funs(mean), `gross(disney.data)`, inflation.adjusted.gross, IMDB.Rating, Meta.score, No.of.Votes,`gross(IMDB.data)`)
+
+grouping_direct_cert %>% gt %>% tab_header(title=md("**Summary Statistics**"), subtitle=md("Grouped By Director and Certificate")) %>% tab_spanner(label="Variables",columns=c("Director","Certificate","gross(disney.data)","inflation.adjusted.gross", "IMDB.Rating", "Meta.score", "No.of.Votes", "gross(IMDB.data)"))
+```
+
+
+```{R}
+#using my own function
+naprop <- function(x) {
+    sum(is.na(x))/length(x)
+}
+proportion_NA <- joined_data %>% summarise_all(naprop)
+
+proportion_NA %>% kable()
+
+```
+
+In order to compute summary statistics of each of my numeric variables, I selected each variable and used summarise_each() to compute each statistic for the variables. I then tidied this data by gathering the data into stat and val columns, separating the stat column into var and stat columns, and then spread the data so that each variable I selected had a different column. I then found the counts of each level for my categorical variables by grouping by them and then using summarise(n()). I also got summary statistics for these variables after grouping by categorical variables by grouping and then using summarise_each() to find the mean of the variables I wanted. To count the number of NA's for each variable, I summarised the sum of the NAs across all columns using summarise_all(). Lastly, I used my function to calculate the proportion of NAs in each variable.
+
+After looking at the table grouped by MPAA ratings and Genre, I thought it was interesting that across all of the genres, they all had a range of IMDB ratings. None of them seemed to have a higher overall rating. Additionally, no MPAA Rating had a specific IMDB rating, they ranged from low to high. One last thing I noticed was that PG-13 movies tended to have lower meta score ratings and G movies had higher meta score ratings. I didn't see any particular relationship between genre or rating and gross. These were just a few of the things I saw!
+
 
 
 #### Visualizing
 
 ```{R}
-# your plot 1
+ggplot(joined_data, aes(x = IMDB.Rating, fill = genre)) + geom_density(alpha = 0.5) + geom_vline(aes(xintercept = mean(IMDB.Rating)))+ theme(legend.position = "bottom") + scale_y_continuous(breaks=seq(0,7,1))
 ```
 
-Your discussion of plot 1
+In plot 1, we are able to see the overall IMDB ratings for each respective genre. For the most part, it seems that all of the genres seem to have gotten IMDB ratings spread across the minimum rating to the maximum. Something that does stand out is that the Black Comedy genre seems to have received only lower IMDB ratings. This may be due to the fact that there was only a few movies with that genre, so there aren't many ratings to go off of. Additionally, I added a vertical line where the overall mean IMDB rating was. This allowed me to visualize how each genre's IMDB ratings compared to the average rating.
 
 ```{R}
-# your plot 2
+ggplot(joined_data, aes(inflation.adjusted.gross, IMDB.Rating)) + geom_point(aes(color=genre)) + geom_smooth(method="lm") + theme(legend.position = "bottom") + scale_y_continuous(breaks=seq(6,9,0.1))
 ```
 
-Your discussion of plot 2
+In plot 2, we are able to see the relationship between the IMDB rating, and the inflation adjusted gross for that movie. Additionally, I colored the points by the genre, so I could see if any particular genre had a higher inflation adjusted gross. When looking at the graph, we can see that there does not seem to be a relationship between the rating the movie received and the amount of money it brought in. I find this very interesting! Lastly, it seems as if the adventure genre sits in the higher range of inflation adjusted gross. Maybe those movies tend to do better!
 
 ```{R}
-# your plot 3
+ggplot(joined_data, aes(x = mpaa.rating)) + geom_bar(aes(y=Meta.score, fill=mpaa.rating), stat="summary", fun=mean) + geom_errorbar(aes(x=mpaa.rating, y=Meta.score), stat="summary", width = 0.5) + theme(axis.text.x = element_text(angle=45, hjust=1), legend.position="right") + scale_y_continuous(breaks=seq(0,100,10))
 ```
 
-Your discussion of plot 3
+In plot 3, I looked at the MPAA rating compared to the average Meta Score for that rating. After analyzing the graph, it seems that across all of the ratings (G, Not Rated, PG, PG-13, R), the Not Rated movies had the most unfavorable reviews compared to the others and the G rated movies had the most favorable reviews (that is what a meta score is). The other movies fell somewhere between those. Maybe because G rated movies apply to a greater audience, they had better reviews.
 
 #### Concluding Remarks
 

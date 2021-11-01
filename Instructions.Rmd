@@ -1,7 +1,7 @@
 ---
 title: 'Project 1: Wrangling, Exploration, Visualization'
 author: "SDS322E"
-date: ''
+date: '10/13/2021'
 output:
   html_document:
     toc: yes
@@ -41,13 +41,13 @@ Note that you will need to read these datasets into R at the top of your Rmd fil
 
 ```{R eval=F}
 library(tidyverse)
-data1 <- read_csv("/path/to/dataset1.csv")
-data2 <- read_csv("/path/to/dataset2.csv")
+data1 <- read_csv("disney_movies.csv")
+data2 <- read_csv("imdb_top_1000.csv")
 
 #or, if you'd prefer to read it in from some remote location
 
-data1 <- read_csv("https://some.website/dataset1.csv")
-data2 <- read_csv("https://some.website/dataset2.csv")
+#data1 <- read_csv("https://some.website/dataset1.csv")
+#data2 <- read_csv("https://some.website/dataset2.csv")
 ```
 
 ### Guidelines
