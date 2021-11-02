@@ -25,7 +25,7 @@ tidy=TRUE, tidy.opts=list(width.cutoff=60), R.options=list(max.print=100))
 
 Paragraph or two introducing your datasets and variables, why they are interesting to you, etc.
 
-I chose two movie related datasets that I found on Kaggle. data1 is a dataset of Disney movies that I found, and data2 is a list of IMDB's top 1000 movies and shows based on their IMDB ratings. data1 has the title, genre, Motion Picture Association film rating, inflation adjusted gross, and total gross of that respective movie. data2 has the title, certificate, IMDB rating, meta score, director, number of votes, and gross income from that movie. 
+I chose two movie related datasets that I found on Kaggle. The Disney data was obtained over the years by a student who researched the movies online up until 2016 and the IMDB data was taken from the IMDB website. data1 is a dataset of Disney movies that I found, and data2 is a list of IMDB's top 1000 movies and shows based on their IMDB ratings. data1 has the title, genre, Motion Picture Association film rating, inflation adjusted gross, and total gross of that respective movie. data2 has the title, certificate, IMDB rating, meta score, director, number of votes, and gross income from that movie. 
 
 I am a huge movie lover so I thought this would be fun to do! Aside from that, I absolutely love Disney, so that is why I picked those specific movies to look at. I plan to figure out which of the Disney movies made it on to IMDB's top 1000 movies/shows list. I'm excited to see what IMDB ratings the Disney movies on that list got.
 ```{R}
